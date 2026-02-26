@@ -52,8 +52,6 @@ class SettingsProvider extends ChangeNotifier {
   static const String _providerConfigsKey = 'provider_configs_v1';
   static const String _pinnedModelsKey = 'pinned_models_v1';
   static const String _selectedModelKey = 'selected_model_v1';
-  static const String _titleModelKey = 'title_model_v1';
-  static const String _titlePromptKey = 'title_prompt_v1';
   static const String _ocrModelKey = 'ocr_model_v1';
   static const String _ocrPromptKey = 'ocr_prompt_v1';
   static const String _summaryModelKey = 'summary_model_v1';
@@ -355,18 +353,6 @@ class SettingsProvider extends ChangeNotifier {
         _currentModelId = parts.sublist(1).join('::');
       }
     }
-    // load title model
-    final titleSel = prefs.getString(_titleModelKey);
-    if (titleSel != null && titleSel.contains('::')) {
-      final parts = titleSel.split('::');
-      if (parts.length >= 2) {
-        _titleModelProvider = parts[0];
-        _titleModelId = parts.sublist(1).join('::');
-      }
-    }
-    // load title prompt
-    final tp = prefs.getString(_titlePromptKey);
-    _titlePrompt = (tp == null || tp.trim().isEmpty) ? defaultTitlePrompt : tp;
     // load translate model
     final translateSel = prefs.getString(_translateModelKey);
     if (translateSel != null && translateSel.contains('::')) {
@@ -1549,7 +1535,7 @@ class SettingsProvider extends ChangeNotifier {
     await setProviderConfig(key, old.copyWith(avatarType: null, avatarValue: null));
   }
 
-  /// Clears all global model selections (current, title, translate, OCR) that reference the given provider.
+  /// Clears all global model selections (current, translate, OCR) that reference the given provider.
   /// Used when a provider is disabled or deleted.
   Future<void> clearSelectionsForProvider(String providerKey) async {
     final prefs = await SharedPreferences.getInstance();
@@ -1558,12 +1544,6 @@ class SettingsProvider extends ChangeNotifier {
       _currentModelProvider = null;
       _currentModelId = null;
       await prefs.remove(_selectedModelKey);
-      changed = true;
-    }
-    if (_titleModelProvider == providerKey) {
-      _titleModelProvider = null;
-      _titleModelId = null;
-      await prefs.remove(_titleModelKey);
       changed = true;
     }
     if (_translateModelProvider == providerKey) {
@@ -1598,12 +1578,6 @@ class SettingsProvider extends ChangeNotifier {
       _currentModelProvider = null;
       _currentModelId = null;
       await prefs.remove(_selectedModelKey);
-      changed = true;
-    }
-    if (_titleModelProvider == providerKey && _titleModelId == modelId) {
-      _titleModelProvider = null;
-      _titleModelId = null;
-      await prefs.remove(_titleModelKey);
       changed = true;
     }
     if (_translateModelProvider == providerKey && _translateModelId == modelId) {
@@ -1651,11 +1625,6 @@ class SettingsProvider extends ChangeNotifier {
       _currentModelProvider = null;
       _currentModelId = null;
       await prefs.remove(_selectedModelKey);
-    }
-    if (_titleModelProvider == key) {
-      _titleModelProvider = null;
-      _titleModelId = null;
-      await prefs.remove(_titleModelKey);
     }
     if (_translateModelProvider == key) {
       _translateModelProvider = null;
@@ -1729,55 +1698,6 @@ class SettingsProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_selectedModelKey);
   }
-
-  // Title model and prompt
-  String? _titleModelProvider;
-  String? _titleModelId;
-  String? get titleModelProvider => _titleModelProvider;
-  String? get titleModelId => _titleModelId;
-  String? get titleModelKey => (_titleModelProvider != null && _titleModelId != null)
-      ? '${_titleModelProvider!}::${_titleModelId!}'
-      : null;
-
-  static const String defaultTitlePrompt = '''I will give you some dialogue content in the `<content>` block.
-You need to summarize the conversation between user and assistant into a short title.
-1. The title language should be consistent with the user's primary language
-2. Do not use punctuation or other special symbols
-3. Reply directly with the title
-4. Summarize using {locale} language
-5. The title should not exceed 10 characters
-
-<content>
-{content}
-</content>''';
-
-  String _titlePrompt = defaultTitlePrompt;
-  String get titlePrompt => _titlePrompt;
-
-  Future<void> setTitleModel(String providerKey, String modelId) async {
-    _titleModelProvider = providerKey;
-    _titleModelId = modelId;
-    notifyListeners();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_titleModelKey, '$providerKey::$modelId');
-  }
-
-  Future<void> resetTitleModel() async {
-    _titleModelProvider = null;
-    _titleModelId = null;
-    notifyListeners();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_titleModelKey);
-  }
-
-  Future<void> setTitlePrompt(String prompt) async {
-    _titlePrompt = prompt.trim().isEmpty ? defaultTitlePrompt : prompt;
-    notifyListeners();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_titlePromptKey, _titlePrompt);
-  }
-
-  Future<void> resetTitlePrompt() async => setTitlePrompt(defaultTitlePrompt);
 
   // Translate model and prompt
   String? _translateModelProvider;
@@ -2627,9 +2547,6 @@ DO NOT GIVE ANSWERS OR DO HOMEWORK FOR THE USER. If the user asks a math or logi
     copy._pinnedModels.addAll(_pinnedModels);
     copy._currentModelProvider = _currentModelProvider;
     copy._currentModelId = _currentModelId;
-    copy._titleModelProvider = _titleModelProvider;
-    copy._titleModelId = _titleModelId;
-    copy._titlePrompt = _titlePrompt;
     copy._translateModelProvider = _translateModelProvider;
     copy._translateModelId = _translateModelId;
     copy._translatePrompt = _translatePrompt;

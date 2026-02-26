@@ -258,7 +258,6 @@ class MessageGenerationService {
     required SettingsProvider settings,
     required bool supportsReasoning,
     required bool enableReasoning,
-    required bool generateTitleOnFinish,
   }) {
     return stream_ctrl.GenerationContext(
       assistantMessage: assistantMessage,
@@ -276,7 +275,6 @@ class MessageGenerationService {
       supportsReasoning: supportsReasoning,
       enableReasoning: enableReasoning,
       streamOutput: assistant?.streamOutput ?? true,
-      generateTitleOnFinish: generateTitleOnFinish,
     );
   }
 

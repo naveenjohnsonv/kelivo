@@ -924,8 +924,6 @@
   "defaultModelPageTitle": "Default Model",
   "defaultModelPageChatModelTitle": "Chat Model",
   "defaultModelPageChatModelSubtitle": "Global default chat model",
-  "defaultModelPageTitleModelTitle": "Title Summary Model",
-  "defaultModelPageTitleModelSubtitle": "Used for summarizing conversation titles; prefer fast & cheap models",
   "defaultModelPageSummaryModelTitle": "Summary Model",
   "defaultModelPageSummaryModelSubtitle": "Used for generating conversation summaries; prefer fast and cheap models",
   "defaultModelPageTranslateModelTitle": "Translation Model",
@@ -933,23 +931,11 @@
   "defaultModelPageOcrModelTitle": "OCR Model",
   "defaultModelPageOcrModelSubtitle": "Used for extracting text and descriptions from images",
   "defaultModelPagePromptLabel": "Prompt",
-  "defaultModelPageTitlePromptHint": "Enter prompt template for title summarization",
   "defaultModelPageSummaryPromptHint": "Enter prompt template for summary generation",
   "defaultModelPageTranslatePromptHint": "Enter prompt template for translation",
   "defaultModelPageOcrPromptHint": "Enter prompt template for OCR image understanding",
   "defaultModelPageResetDefault": "Reset to default",
   "defaultModelPageSave": "Save",
-  "defaultModelPageTitleVars": "Vars: content: {contentVar}, locale: {localeVar}",
-  "@defaultModelPageTitleVars": {
-    "placeholders": {
-      "contentVar": {
-        "type": "String"
-      },
-      "localeVar": {
-        "type": "String"
-      }
-    }
-  },
   "defaultModelPageSummaryVars": "Variables: previous summary: {previousSummaryVar}, new messages: {userMessagesVar}",
   "@defaultModelPageSummaryVars": {
     "placeholders": {

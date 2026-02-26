@@ -262,11 +262,6 @@ class _SideDrawerState extends State<SideDrawer> with TickerProviderStateMixin {
             onTap: () async { await chatService.togglePinConversation(chat.id); },
           ),
           DesktopContextMenuItem(
-            icon: Lucide.RefreshCw,
-            label: l10n.sideDrawerMenuRegenerateTitle,
-            onTap: () async { await _regenerateTitle(context, chat.id); },
-          ),
-          DesktopContextMenuItem(
             icon: Lucide.Shuffle,
             label: l10n.sideDrawerMenuMoveTo,
             onTap: () async {
@@ -400,11 +395,6 @@ class _SideDrawerState extends State<SideDrawer> with TickerProviderStateMixin {
                       icon: Lucide.Pin,
                       label: isPinned ? l10n.sideDrawerMenuUnpin : l10n.sideDrawerMenuPin,
                       action: () async { await chatService.togglePinConversation(chat.id); },
-                    ),
-                    row(
-                      icon: Lucide.RefreshCw,
-                      label: l10n.sideDrawerMenuRegenerateTitle,
-                      action: () async { await _regenerateTitle(context, chat.id); },
                     ),
                     row(
                       icon: Lucide.Shuffle,
@@ -572,30 +562,6 @@ class _SideDrawerState extends State<SideDrawer> with TickerProviderStateMixin {
     if (ok == true) {
       await context.read<ChatService>().renameConversation(chat.id, controller.text.trim());
     }
-  }
-
-  Future<void> _regenerateTitle(BuildContext context, String conversationId) async {
-    final settings = context.read<SettingsProvider>();
-    final chatService = context.read<ChatService>();
-    final convo = chatService.getConversation(conversationId);
-    if (convo == null) return;
-    // Decide model
-    final provKey = settings.titleModelProvider ?? settings.currentModelProvider;
-    final mdlId = settings.titleModelId ?? settings.currentModelId;
-    if (provKey == null || mdlId == null) return;
-    final cfg = settings.getProviderConfig(provKey);
-    // Content
-    final msgs = chatService.getMessages(conversationId);
-    final joined = msgs.where((m) => m.content.isNotEmpty).map((m) => '${m.role == 'assistant' ? 'Assistant' : 'User'}: ${m.content}').join('\n\n');
-    final content = joined.length > 3000 ? joined.substring(0, 3000) : joined;
-    final locale = Localizations.localeOf(context).toLanguageTag();
-    final prompt = settings.titlePrompt.replaceAll('{locale}', locale).replaceAll('{content}', content);
-    try {
-      final title = (await ChatApiService.generateText(config: cfg, modelId: mdlId, prompt: prompt)).trim();
-      if (title.isNotEmpty) {
-        await chatService.renameConversation(conversationId, title);
-      }
-    } catch (_) {}
   }
 
   @override

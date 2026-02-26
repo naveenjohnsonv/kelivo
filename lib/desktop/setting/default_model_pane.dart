@@ -67,40 +67,13 @@ class DesktopDefaultModelPane extends StatelessWidget {
 
                   const SizedBox(height: 16),
                   _ModelCard(
-                    icon: lucide.Lucide.NotebookTabs,
-                    title: l10n.defaultModelPageTitleModelTitle,
-                    subtitle: l10n.defaultModelPageTitleModelSubtitle,
-                    modelProvider: settings.titleModelProvider,
-                    modelId: settings.titleModelId,
-                    fallbackProvider: settings.currentModelProvider,
-                    fallbackModelId: settings.currentModelId,
-                    onReset: () async {
-                      await context.read<SettingsProvider>().resetTitleModel();
-                    },
-                    onPick: () async {
-                      final sel = await showModelSelector(context);
-                      if (sel != null) {
-                        await context.read<SettingsProvider>().setTitleModel(
-                          sel.providerKey,
-                          sel.modelId,
-                        );
-                      }
-                    },
-                    configAction: () => _showTitlePromptDialog(context),
-                  ),
-
-                  const SizedBox(height: 16),
-                  _ModelCard(
                     icon: lucide.Lucide.FileText,
                     title: l10n.defaultModelPageSummaryModelTitle,
                     subtitle: l10n.defaultModelPageSummaryModelSubtitle,
                     modelProvider: settings.summaryModelProvider,
                     modelId: settings.summaryModelId,
-                    fallbackProvider:
-                        settings.titleModelProvider ??
-                        settings.currentModelProvider,
-                    fallbackModelId:
-                        settings.titleModelId ?? settings.currentModelId,
+                    fallbackProvider: settings.currentModelProvider,
+                    fallbackModelId: settings.currentModelId,
                     onReset: () async {
                       await context
                           .read<SettingsProvider>()
@@ -171,96 +144,6 @@ class DesktopDefaultModelPane extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-
-  Future<void> _showTitlePromptDialog(BuildContext context) async {
-    final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
-    final sp = context.read<SettingsProvider>();
-    final ctrl = TextEditingController(text: sp.titlePrompt);
-    await showDialog<void>(
-      context: context,
-      barrierDismissible: true,
-      builder: (ctx) {
-        return Dialog(
-          backgroundColor: cs.surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          insetPadding: const EdgeInsets.symmetric(
-            horizontal: 24,
-            vertical: 24,
-          ),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 600),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          l10n.defaultModelPagePromptLabel,
-                          style: const TextStyle(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      _SmallIconBtn(
-                        icon: lucide.Lucide.X,
-                        onTap: () => Navigator.of(ctx).maybePop(),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  _promptEditor(
-                    ctx,
-                    controller: ctrl,
-                    hintText: l10n.defaultModelPageTitlePromptHint,
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      _DeskIosButton(
-                        label: l10n.defaultModelPageResetDefault,
-                        filled: false,
-                        dense: true,
-                        onTap: () async {
-                          await sp.resetTitlePrompt();
-                          ctrl.text = sp.titlePrompt;
-                        },
-                      ),
-                      const Spacer(),
-                      _DeskIosButton(
-                        label: l10n.defaultModelPageSave,
-                        filled: true,
-                        dense: true,
-                        onTap: () async {
-                          await sp.setTitlePrompt(ctrl.text.trim());
-                          if (ctx.mounted) Navigator.of(ctx).maybePop();
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    l10n.defaultModelPageTitleVars('{content}', '{locale}'),
-                    style: TextStyle(
-                      color: cs.onSurface.withOpacity(0.6),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
     );
   }
 

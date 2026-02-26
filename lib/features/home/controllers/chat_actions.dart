@@ -88,9 +88,6 @@ class ChatActions {
   /// Called when an error occurs during streaming.
   void Function(String error)? onStreamError;
 
-  /// Called when stream finishes and title may need to be generated.
-  void Function(String conversationId)? onMaybeGenerateTitle;
-
   /// Called when summary may need to be generated (every N messages).
   void Function(String conversationId)? onMaybeGenerateSummary;
 
@@ -246,7 +243,6 @@ class ChatActions {
         settings: settings,
         supportsReasoning: supportsReasoning,
         enableReasoning: enableReasoning,
-        generateTitleOnFinish: true,
       );
 
       await _executeGeneration(ctx);
@@ -379,7 +375,6 @@ class ChatActions {
       settings: settings,
       supportsReasoning: supportsReasoning,
       enableReasoning: enableReasoning,
-      generateTitleOnFinish: false,
     );
 
     await _executeGeneration(ctx);
@@ -760,8 +755,7 @@ class ChatActions {
   }
 
   /// Finish streaming and persist final state.
-  Future<void> _finishStreaming(stream_ctrl.StreamingState state,
-      {bool generateTitle = true}) async {
+  Future<void> _finishStreaming(stream_ctrl.StreamingState state) async {
     final messageId = state.messageId;
     final conversationId = state.conversationId;
 
@@ -771,19 +765,10 @@ class ChatActions {
     // Clean up stream throttle timer and flush final content
     streamController.cleanupTimers(messageId);
 
-    final shouldGenerateTitle =
-        generateTitle && state.ctx.generateTitleOnFinish && !state.titleQueued;
     if (state.finishHandled) {
-      if (shouldGenerateTitle) {
-        state.titleQueued = true;
-        onMaybeGenerateTitle?.call(conversationId);
-      }
       return;
     }
     state.finishHandled = true;
-    if (shouldGenerateTitle) {
-      state.titleQueued = true;
-    }
 
     // Replace extremely long inline base64 images with local files to avoid jank
     final processedContent = _transformAssistantContent(state);
@@ -824,10 +809,6 @@ class ChatActions {
         );
       },
     );
-
-    if (shouldGenerateTitle) {
-      onMaybeGenerateTitle?.call(conversationId);
-    }
 
     // Trigger summary generation check (actual logic in HomeViewModel)
     onMaybeGenerateSummary?.call(conversationId);
@@ -905,8 +886,7 @@ class ChatActions {
 
     streamController.cleanupTimers(state.messageId);
     if (_loadingConversationIds.contains(conversationId)) {
-      await _finishStreaming(state,
-          generateTitle: state.ctx.generateTitleOnFinish);
+      await _finishStreaming(state);
     }
     onStreamFinished?.call();
     await _conversationStreams.remove(conversationId)?.cancel();

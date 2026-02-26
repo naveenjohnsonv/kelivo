@@ -914,7 +914,6 @@ class GenerationContext {
     required this.supportsReasoning,
     required this.enableReasoning,
     required this.streamOutput,
-    this.generateTitleOnFinish = true,
   });
 
   final ChatMessage assistantMessage;
@@ -932,7 +931,6 @@ class GenerationContext {
   final bool supportsReasoning;
   final bool enableReasoning;
   final bool streamOutput;
-  final bool generateTitleOnFinish;
 }
 
 /// State object for streaming message generation.
@@ -946,7 +944,6 @@ class StreamingState {
   String bufferedReasoning = '';
   DateTime? reasoningStartAt;
   bool finishHandled = false;
-  bool titleQueued = false;
 
   String get messageId => ctx.assistantMessage.id;
   String get conversationId => ctx.assistantMessage.conversationId;

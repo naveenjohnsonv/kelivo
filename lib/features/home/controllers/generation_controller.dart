@@ -199,7 +199,6 @@ class GenerationController {
     required bool supportsReasoning,
     required bool enableReasoning,
     required bool streamOutput,
-    bool generateTitleOnFinish = true,
   }) {
     return stream_ctrl.GenerationContext(
       assistantMessage: assistantMessage,
@@ -217,7 +216,6 @@ class GenerationController {
       supportsReasoning: supportsReasoning,
       enableReasoning: enableReasoning,
       streamOutput: streamOutput,
-      generateTitleOnFinish: generateTitleOnFinish,
     );
   }
 }

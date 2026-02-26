@@ -61,7 +61,6 @@ class HomeViewModel extends ChangeNotifier {
     _chatActions.onLoadingChanged = _onLoadingChanged;
     _chatActions.onContentUpdated = _onContentUpdated;
     _chatActions.onStreamError = _onStreamError;
-    _chatActions.onMaybeGenerateTitle = _onMaybeGenerateTitle;
     _chatActions.onMaybeGenerateSummary = _onMaybeGenerateSummary;
     _chatActions.onStreamFinished = _onStreamFinished;
     _chatActions.onFileProcessingStarted = _onFileProcessingStarted;
@@ -165,11 +164,6 @@ class HomeViewModel extends ChangeNotifier {
 
   void _onStreamError(String error) {
     onError?.call(error);
-  }
-
-  void _onMaybeGenerateTitle(String conversationId) {
-    // Trigger title generation asynchronously
-    _maybeGenerateTitleFor(conversationId);
   }
 
   void _onMaybeGenerateSummary(String conversationId) {
@@ -559,80 +553,6 @@ class HomeViewModel extends ChangeNotifier {
   }
 
   // ============================================================================
-  // Title Generation
-  // ============================================================================
-
-  /// Generate title for a conversation if needed.
-  Future<void> _maybeGenerateTitleFor(String conversationId,
-      {bool force = false}) async {
-    final convo = _chatService.getConversation(conversationId);
-    if (convo == null) return;
-    if (!force &&
-        convo.title.isNotEmpty &&
-        convo.title != getTitleForLocale(_contextProvider)) return;
-
-    final settings = _contextProvider.read<SettingsProvider>();
-    final assistantProvider = _contextProvider.read<AssistantProvider>();
-
-    // Get assistant for this conversation
-    final assistant = convo.assistantId != null
-        ? assistantProvider.getById(convo.assistantId!)
-        : assistantProvider.currentAssistant;
-
-    // Decide model: prefer title model, else fall back to assistant's model, then to global default
-    final provKey = settings.titleModelProvider ??
-        assistant?.chatModelProvider ??
-        settings.currentModelProvider;
-    final mdlId = settings.titleModelId ??
-        assistant?.chatModelId ??
-        settings.currentModelId;
-    if (provKey == null || mdlId == null) return;
-    final cfg = settings.getProviderConfig(provKey);
-
-    // Build content from messages (truncate to reasonable length)
-    final msgs = _chatService.getMessages(convo.id);
-    final tIndex = convo.truncateIndex;
-    final List<ChatMessage> sourceAll =
-        (tIndex >= 0 && tIndex <= msgs.length) ? msgs.sublist(tIndex) : msgs;
-    final List<ChatMessage> source = collapseVersions(sourceAll);
-    final joined = source
-        .where((m) => m.content.isNotEmpty)
-        .map((m) =>
-            '${m.role == 'assistant' ? 'Assistant' : 'User'}: ${m.content}')
-        .join('\n\n');
-    final content = joined.length > 3000 ? joined.substring(0, 3000) : joined;
-    final locale = Localizations.localeOf(_contextProvider).toLanguageTag();
-
-    String prompt = settings.titlePrompt
-        .replaceAll('{locale}', locale)
-        .replaceAll('{content}', content);
-
-    try {
-      final title = (await ChatApiService.generateText(
-              config: cfg, modelId: mdlId, prompt: prompt))
-          .trim();
-      if (title.isNotEmpty) {
-        await _chatService.renameConversation(convo.id, title);
-        if (currentConversation?.id == convo.id) {
-          _chatController
-              .updateCurrentConversation(_chatService.getConversation(convo.id));
-          notifyListeners();
-        }
-      }
-    } catch (_) {
-      // Ignore title generation failure silently
-    }
-  }
-
-  /// Force generate title for the current conversation.
-  Future<void> generateTitle({bool force = false}) async {
-    final cid = currentConversation?.id;
-    if (cid != null) {
-      await _maybeGenerateTitleFor(cid, force: force);
-    }
-  }
-
-  // ============================================================================
   // Summary Generation
   // ============================================================================
 
@@ -657,13 +577,11 @@ class HomeViewModel extends ChangeNotifier {
     // Only generate summary if assistant has recent chats reference enabled
     if (assistant?.enableRecentChatsReference != true) return;
 
-    // Use summary model if configured, else fall back to title model, then current model
+    // Use summary model if configured, else fall back to current model
     final provKey = settings.summaryModelProvider ??
-        settings.titleModelProvider ??
         assistant?.chatModelProvider ??
         settings.currentModelProvider;
     final mdlId = settings.summaryModelId ??
-        settings.titleModelId ??
         assistant?.chatModelId ??
         settings.currentModelId;
     if (provKey == null || mdlId == null) return;
